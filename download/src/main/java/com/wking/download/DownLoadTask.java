@@ -82,10 +82,6 @@ public class DownLoadTask implements IDownLoadTask, IDownloadQuery {
         try {
             cur = manager.query(query);
             if (cur != null && cur.moveToFirst()) {
-//                String[] columns=cur.getColumnNames();
-//                for (int i = 0; i < columns.length; i++) {
-//                    Log.d(TAG,"ColumnName: "+columns[i]);
-//                }
                 mInfo.setReason(cur.getInt(
                         cur.getColumnIndex(DownloadManager.COLUMN_REASON)));
                 mInfo.setStatus(cur.getInt(
@@ -128,8 +124,11 @@ public class DownLoadTask implements IDownLoadTask, IDownloadQuery {
             }
         }
         //只有监测进度时才会回调
-        if(isProgress){
-            onDownloadProgress();
+        if (isProgress) {
+            //暂停时会反复回调.
+            if (!mInfo.isPaused()) {
+                onDownloadProgress();
+            }
             if (mInfo.isComplete()) {
                 onDownloadComplete();
             }
@@ -163,14 +162,22 @@ public class DownLoadTask implements IDownLoadTask, IDownloadQuery {
      */
     @Override
     public void registerListener(IDownLoadListener listener) {
+        Log.d(TAG,"registerListener");
         synchronized (mListener) {
             if (listener != null && !mListener.contains(listener))
                 mListener.add(listener);
         }
-        //注册文件监听
-        if (mDownloadObserver == null) {
-            mDownloadObserver = new DownloadObserver(new Handler(Looper.getMainLooper()), this);
-            register();
+        //如果注册监听前就已经完成了,需要异常调用进度并且完成方法.
+        if (getDownLoadInfo().isComplete()) {
+            Log.d(TAG,"isComplete");
+            onDownloadProgress();
+            onDownloadComplete();
+        } else {
+            //注册文件监听
+            if (mDownloadObserver == null) {
+                mDownloadObserver = new DownloadObserver(new Handler(Looper.getMainLooper()), this);
+                register();
+            }
         }
     }
 
@@ -181,6 +188,7 @@ public class DownLoadTask implements IDownLoadTask, IDownloadQuery {
      */
     @Override
     public void unregisterListener(IDownLoadListener listener) {
+        Log.d(TAG,"unregisterListener");
         synchronized (mListener) {
             if (listener != null && mListener.contains(listener))
                 mListener.remove(listener);

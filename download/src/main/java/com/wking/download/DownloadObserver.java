@@ -14,10 +14,12 @@ import android.util.Log;
 class DownloadObserver extends ContentObserver {
     private String TAG = "DownloadObserver";
     private IDownloadQuery mQuery;//数据更新回调接口.
+    private Handler mHandler;
 
     public DownloadObserver(Handler handler, IDownloadQuery query) {
         super(handler);
         this.mQuery = query;
+        mHandler = handler;
     }
 
     /**
@@ -28,8 +30,10 @@ class DownloadObserver extends ContentObserver {
     @Override
     public void onChange(boolean selfChange) {
         super.onChange(selfChange);
-//        Log.d(TAG, "ContentObserver->onChange();");
-        notifyChanged();
+        Log.d(TAG, "ContentObserver->onChange();");
+        mHandler.postDelayed(() -> {
+            notifyChanged();
+        }, 1000);
     }
 
     /**

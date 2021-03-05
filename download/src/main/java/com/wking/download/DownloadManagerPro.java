@@ -13,7 +13,11 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * The type Download manager pro.
+ * DownloadManager 的增强版本,扩展了DownloadManager的功能,便于方便使用和管理.
+ * 主要增加了暂停,恢复下载,进度监听,任务恢复等.
+ * @Author Sean
+ * @Date 2021/3/5
+ * @Description DownloadManagerPro.java
  */
 public class DownloadManagerPro {
 
@@ -23,7 +27,8 @@ public class DownloadManagerPro {
     private static DownloadManager mManager;
     //DownloadManager任务列表
     private static List<DownLoadTask> mDownloadList = new ArrayList<>();
-    private static IDownloadCancel mDownloadCancel;//取消任务时从列表里删除
+    //取消任务监听接口.
+    private static IDownloadCancel mDownloadCancel;
 
     /**
      * Sets context.
