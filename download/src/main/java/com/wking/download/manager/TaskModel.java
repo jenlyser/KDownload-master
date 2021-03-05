@@ -1,5 +1,6 @@
 package com.wking.download.manager;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -9,7 +10,7 @@ import java.util.Date;
  * @Date 2021 /3/3
  * @Description TaskModel.java
  */
-public class TaskModel {
+public class TaskModel implements Serializable {
     private long id;
     private String url;
     private String path;

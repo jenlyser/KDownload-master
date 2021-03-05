@@ -1,5 +1,6 @@
 package com.wking.download.manager;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.List;
  * @Date 2021 /3/3
  * @Description TaskData.java
  */
-public class TaskData {
+public class TaskData implements Serializable {
     private long lastModify = new Date().getTime();
     private List<TaskModel> taskData = new ArrayList<>();
 

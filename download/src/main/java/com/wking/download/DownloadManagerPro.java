@@ -9,6 +9,7 @@ import com.wking.download.manager.TaskHolder;
 import com.wking.download.manager.TaskModel;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -21,7 +22,8 @@ public class DownloadManagerPro {
     //DownloadManager对象
     private static DownloadManager mManager;
     //DownloadManager任务列表
-    private static List<DownLoadTask> mDownloadList;
+    private static List<DownLoadTask> mDownloadList = new ArrayList<>();
+    private static IDownloadCancel mDownloadCancel;//取消任务时从列表里删除
 
     /**
      * Sets context.
@@ -97,7 +99,7 @@ public class DownloadManagerPro {
             synchronized (mDownloadList) {
                 List<TaskModel> taskModels = TaskHolder.getInstance().getDataList();
                 for (int i = 0; i < taskModels.size(); i++) {
-                    addTaskToList(new DownLoadTask(mContext, mManager, taskModels.get(i).getId()));
+                    addTaskToList(new DownLoadTask(getContext(), getManager(), taskModels.get(i).getId()));
                 }
             }
         }
@@ -110,9 +112,25 @@ public class DownloadManagerPro {
      * @param task
      */
     private static void addTaskToList(DownLoadTask task) {
-        if (task != null && !getTasks().contains(task)) {
+        if (mDownloadCancel == null) {
+            mDownloadCancel = new IDownloadCancel() {
+                @Override
+                public void onCancel(long id) {
+                    //从下载记录中移除.
+                    TaskHolder.getInstance().remove(id);
+                    DownLoadTask downLoadTask = getTaskByDownloadId(id, null);
+                    if (downLoadTask != null && mDownloadList.contains(downLoadTask)) {
+                        synchronized (mDownloadList) {
+                            mDownloadList.remove(downLoadTask);
+                        }
+                    }
+                }
+            };
+        }
+        if (task != null && mDownloadList != null && !mDownloadList.contains(task)) {
+            task.setCancelListen(mDownloadCancel);
             synchronized (mDownloadList) {
-                getTasks().add(task);
+                mDownloadList.add(task);
             }
         }
     }
@@ -126,10 +144,32 @@ public class DownloadManagerPro {
         if (downloadInfo != null && downloadInfo.isExists()) {
             TaskModel model = new TaskModel();
             model.setId(downloadInfo.getId());
-            model.setUrl(downloadInfo.getUri().getPath());
-            model.setPath(downloadInfo.getLocalUri().getPath());
+            model.setUrl(downloadInfo.getDownloadUrl());
+            model.setPath(downloadInfo.getLocalPath());
+            model.setStartTime(new Date().getTime());
             TaskHolder.getInstance().add(model);
         }
+    }
+
+    /**
+     * 根据downLoadId获取任务
+     *
+     * @param downloadId
+     * @return
+     */
+    private static DownLoadTask getTaskByDownloadId(long downloadId, String downloadUrl) {
+        synchronized (mDownloadList) {
+            DownLoadTask task;
+            for (int i = 0; i < getTasks().size(); i++) {
+                task = getTasks().get(i);
+                if (task.getDownLoadInfo().getId() == downloadId) {
+                    return task;
+                } else if (!TextUtils.isEmpty(downloadUrl) && downloadUrl.equals(task.getDownLoadInfo().getDownloadUrl())) {
+                    return task;
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -140,23 +180,17 @@ public class DownloadManagerPro {
      */
     public static DownLoadTask getTask(long downloadId) {
         if (downloadId >= 0) {
-            synchronized (mDownloadList) {
-                DownLoadTask task;
-                for (int i = 0; i < getTasks().size(); i++) {
-                    task = getTasks().get(i);
-                    if (task.getDownLoadInfo().getId() == downloadId) {
-                        return task;
-                    }
-                }
-                TaskModel model = TaskHolder.getInstance().getModel(downloadId);
-                if (model != null) {
-                    task = new DownLoadTask(getContext(), getManager(), model.getId());
-                } else {
-                    task = new DownLoadTask(getContext(), getManager(), downloadId);
-                }
-                addTaskToList(task);
-                return task;
+            DownLoadTask task = getTaskByDownloadId(downloadId, null);
+            if (task != null) return task;
+            TaskModel model = TaskHolder.getInstance().getModel(downloadId);
+            if (model != null) {
+                task = new DownLoadTask(getContext(), getManager(), model.getId());
+            } else {
+                task = new DownLoadTask(getContext(), getManager(), downloadId);
             }
+            addTaskToList(task);
+            return task;
+
         }
         return null;
     }
@@ -170,20 +204,13 @@ public class DownloadManagerPro {
      */
     public static DownLoadTask getTask(String downloadUrl) {
         if (!TextUtils.isEmpty(downloadUrl)) {
-            synchronized (mDownloadList) {
-                DownLoadTask task;
-                for (int i = 0; i < getTasks().size(); i++) {
-                    task = getTasks().get(i);
-                    if (downloadUrl.equals(task.getDownLoadInfo().getUri().toString())) {
-                        return task;
-                    }
-                }
-                TaskModel model = TaskHolder.getInstance().getModel(downloadUrl);
-                if (model != null) {
-                    task = new DownLoadTask(getContext(), getManager(), model.getId());
-                    addTaskToList(task);
-                    return task;
-                }
+            DownLoadTask task = getTaskByDownloadId(Integer.MIN_VALUE, downloadUrl);
+            if (task != null) return task;
+            TaskModel model = TaskHolder.getInstance().getModel(downloadUrl);
+            if (model != null) {
+                task = new DownLoadTask(getContext(), getManager(), model.getId());
+                addTaskToList(task);
+                return task;
             }
         }
         return null;

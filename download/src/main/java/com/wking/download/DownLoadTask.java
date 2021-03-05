@@ -5,10 +5,12 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.wking.download.manager.DownloadControl;
-import com.wking.download.manager.TaskHolder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +22,7 @@ import java.util.List;
  * @Date 2021 /3/3
  * @Description DownLoadTask.java
  */
-public class DownLoadTask implements IDownLoadTask {
+public class DownLoadTask implements IDownLoadTask, IDownloadQuery {
     /**
      * The constant TAG.
      */
@@ -31,6 +33,9 @@ public class DownLoadTask implements IDownLoadTask {
     private DownloadControl mDownloadControl;
     private long mDownloadId;
     private List<IDownLoadListener> mListener = new ArrayList<>();
+    private DownloadObserver mDownloadObserver;
+    private IDownloadCancel mCancel;
+    private final Uri downloadUri = Uri.parse("content://downloads/my_downloads");
 
     /**
      * Instantiates a new Down load task.
@@ -53,7 +58,11 @@ public class DownLoadTask implements IDownLoadTask {
         if (mDownloadControl == null) {
             mDownloadControl = new DownloadControl(mContext, mManager);
         }
+    }
 
+    @Override
+    public void query() {
+        query(mManager, mDownloadId, true);
     }
 
     /**
@@ -73,13 +82,17 @@ public class DownLoadTask implements IDownLoadTask {
         try {
             cur = manager.query(query);
             if (cur != null && cur.moveToFirst()) {
+//                String[] columns=cur.getColumnNames();
+//                for (int i = 0; i < columns.length; i++) {
+//                    Log.d(TAG,"ColumnName: "+columns[i]);
+//                }
                 mInfo.setReason(cur.getInt(
                         cur.getColumnIndex(DownloadManager.COLUMN_REASON)));
                 mInfo.setStatus(cur.getInt(
                         cur.getColumnIndex(DownloadManager.COLUMN_STATUS)));
-                mInfo.setDownloadSizeBytes(cur.getInt(
+                mInfo.setDownloadSizeBytes(cur.getLong(
                         cur.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)));
-                mInfo.setTotalSizeBytes(cur.getInt(
+                mInfo.setTotalSizeBytes(cur.getLong(
                         cur.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)));
                 if (!isProgress) {
                     mInfo.setId(cur.getLong(
@@ -94,7 +107,7 @@ public class DownLoadTask implements IDownLoadTask {
                             cur.getString(
                                     cur.getColumnIndex(DownloadManager.COLUMN_URI))));
                     String localUri = cur.getString(
-                            cur.getColumnIndex((Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB
+                            cur.getColumnIndex((Build.VERSION.SDK_INT > Build.VERSION_CODES.HONEYCOMB
                                     ? DownloadManager.COLUMN_LOCAL_URI
                                     : DownloadManager.COLUMN_LOCAL_FILENAME)));
                     mInfo.setLocalUri(
@@ -114,6 +127,13 @@ public class DownLoadTask implements IDownLoadTask {
                 cur.close();
             }
         }
+        //只有监测进度时才会回调
+        if(isProgress){
+            onDownloadProgress();
+            if (mInfo.isComplete()) {
+                onDownloadComplete();
+            }
+        }
     }
 
     /**
@@ -123,9 +143,18 @@ public class DownLoadTask implements IDownLoadTask {
      * @return
      */
     private Uri getUri(String uri) {
+        if (TextUtils.isEmpty(uri)) return null;
         return Uri.parse(uri);
     }
 
+    /**
+     * 设置取消监听
+     *
+     * @param cancel
+     */
+    void setCancelListen(IDownloadCancel cancel) {
+        this.mCancel = cancel;
+    }
 
     /**
      * 添加监听
@@ -137,6 +166,11 @@ public class DownLoadTask implements IDownLoadTask {
         synchronized (mListener) {
             if (listener != null && !mListener.contains(listener))
                 mListener.add(listener);
+        }
+        //注册文件监听
+        if (mDownloadObserver == null) {
+            mDownloadObserver = new DownloadObserver(new Handler(Looper.getMainLooper()), this);
+            register();
         }
     }
 
@@ -172,7 +206,12 @@ public class DownLoadTask implements IDownLoadTask {
     @Override
     public boolean pause() {
         initControl();
-        return mDownloadControl.pause(mDownloadId);
+//        boolean status = mDownloadControl.pause(mDownloadId);
+        boolean status = mDownloadControl.pause(downloadUri, mDownloadId);
+        if (status) {
+            onDownloadPause();
+        }
+        return status;
     }
 
     /**
@@ -183,7 +222,12 @@ public class DownLoadTask implements IDownLoadTask {
     @Override
     public boolean resume() {
         initControl();
-        return mDownloadControl.resume(mDownloadId);
+//        boolean status = mDownloadControl.resume(mDownloadId);
+        boolean status = mDownloadControl.resume(downloadUri, mDownloadId);
+        if (status) {
+            onDownloadResume();
+        }
+        return status;
     }
 
     /**
@@ -195,14 +239,91 @@ public class DownLoadTask implements IDownLoadTask {
     public boolean cancel() {
         //从DownloadManager移除.
         int cancel = mManager.remove(mDownloadId);
-        //从下载记录中移除.
-        TaskHolder.getInstance().remove(mDownloadId);
+        if (mCancel != null) {
+            mCancel.onCancel(mDownloadId);
+        }
+        //释放数据
         dispose();
         return cancel > 0;
     }
 
-    public void dispose(){
+    /**
+     * 注册监听文件内容更改.
+     */
+    private void register() {
+        if (mDownloadObserver != null) {
+            mContext.getContentResolver().registerContentObserver(downloadUri, true, mDownloadObserver);
+        }
+    }
 
+    /**
+     * 取消文件内容监听
+     */
+    private void unregister() {
+        if (mDownloadObserver != null) {
+            mContext.getContentResolver().unregisterContentObserver(mDownloadObserver);
+        }
+    }
+
+
+    /**
+     * 恢复现在事件
+     */
+    private void onDownloadResume() {
+        if (mListener == null || mListener.size() < 1) return;
+        Log.d(TAG, "onDownloadResume");
+        synchronized (mListener) {
+            for (int i = 0; i < mListener.size(); i++) {
+                mListener.get(i).onResume();
+            }
+        }
+    }
+
+    /**
+     * 暂停下载事件
+     */
+    private void onDownloadPause() {
+        if (mListener == null || mListener.size() < 1) return;
+        Log.d(TAG, "onDownloadPause");
+        synchronized (mListener) {
+            for (int i = 0; i < mListener.size(); i++) {
+                mListener.get(i).onPause();
+            }
+        }
+    }
+
+    /**
+     * 下载进度通知
+     */
+    private void onDownloadProgress() {
+        if (mListener == null || mListener.size() < 1) return;
+        Log.d(TAG, "onDownloadProgress");
+        synchronized (mListener) {
+            for (int i = 0; i < mListener.size(); i++) {
+                mListener.get(i).onProgress(mInfo.getProgress(), mInfo);
+            }
+        }
+    }
+
+    /**
+     * 下载完成通知
+     */
+    private void onDownloadComplete() {
+        if (mListener == null || mListener.size() < 1) return;
+        Log.d(TAG, "onDownloadComplete");
+        synchronized (mListener) {
+            for (int i = 0; i < mListener.size(); i++) {
+                mListener.get(i).onComplete(mInfo.isSuccessful(), mInfo);
+            }
+        }
+    }
+
+    /**
+     * Dispose.
+     */
+    public void dispose() {
+        unregister();
+        mListener.clear();
     }
 
 }

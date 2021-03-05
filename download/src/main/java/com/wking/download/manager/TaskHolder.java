@@ -25,7 +25,7 @@ public class TaskHolder {
     private TaskData mData = null;
     private Object mLock = new Object();
     private Object mDataLock = new Object();
-    private String mDataFileName = Environment.getDataDirectory().getAbsolutePath() + File.separator + ".download_wk.log";
+    private String mDataFileName = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "/data/.download_wk.log";
     private File mDataFile;
 
     //single instance object
@@ -172,6 +172,7 @@ public class TaskHolder {
 
     /**
      * 获取数据列表
+     *
      * @return
      */
     public List<TaskModel> getDataList() {
@@ -190,9 +191,10 @@ public class TaskHolder {
         if (mDataFile == null) {
             mDataFile = new File(mDataFileName);
         }
-        if (mDataFile == null || mDataFile.exists()) {
+        if (mDataFile == null || !mDataFile.exists()) {
             return null;
         }
+        Log.d(TAG, "data load path:" + mDataFileName);
         TaskData data = null;
         ObjectInputStream inputStream = null;
         synchronized (mLock) {
@@ -200,7 +202,7 @@ public class TaskHolder {
                 inputStream = new ObjectInputStream(new FileInputStream(mDataFile));
                 data = (TaskData) inputStream.readObject();
             } catch (Exception e) {
-                Log.e(TAG, e.getMessage());
+                Log.e(TAG, "Load failure;" + e.getMessage());
             } finally {
                 if (inputStream != null) {
                     try {
@@ -225,6 +227,10 @@ public class TaskHolder {
             if (mDataFile == null) {
                 mDataFile = new File(mDataFileName);
             }
+            if (!mDataFile.getParentFile().exists()) {
+                mDataFile.getParentFile().mkdirs();
+            }
+            Log.d(TAG, "data save path:" + mDataFileName);
             ObjectOutputStream outputStream = null;
             try {
                 outputStream = new ObjectOutputStream(new FileOutputStream(mDataFile));

@@ -20,10 +20,12 @@ public class DownloadControl {
     private String TAG = "DownloadControl";
     public final String METHOD_NAME_PAUSE_DOWNLOAD = "pauseDownload";
     public final String METHOD_NAME_RESUME_DOWNLOAD = "resumeDownload";
-    private Method pauseDownload = null;
-    private Method resumeDownload = null;
+    private static Method pauseDownload = null;
+    private static Method resumeDownload = null;
     private DownloadManager mManager;
     private Context mContext;
+    //默认应该使用该Uri.
+    //private final Uri downloadUri = Uri.parse("content://downloads/my_downloads");
 
     public DownloadControl(Context context, DownloadManager manager) {
         this.mManager = manager;
@@ -51,7 +53,7 @@ public class DownloadControl {
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());
         }
-        return true;
+        return false;
     }
 
     /**
@@ -75,7 +77,7 @@ public class DownloadControl {
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());
         }
-        return true;
+        return false;
     }
 
 

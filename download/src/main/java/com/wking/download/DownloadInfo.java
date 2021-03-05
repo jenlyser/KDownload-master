@@ -2,6 +2,7 @@ package com.wking.download;
 
 import android.app.DownloadManager;
 import android.net.Uri;
+import android.util.Log;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -14,11 +15,12 @@ import java.util.Date;
  * @Description DownloadInfo.java
  */
 public class DownloadInfo {
+    private String TAG="DownloadInfo";
     private long id;//DownloadManager任务ID
     private String title;//下载标题
     private String description;//下载描述
-    private int downloadSizeBytes = 0;//DownloadManager已经下载的数据大小DOWNLOADED_SO_FAR
-    private int totalSizeBytes = 0;//DownloadManager下载文件的总大小
+    private long downloadSizeBytes = 0;//DownloadManager已经下载的数据大小DOWNLOADED_SO_FAR
+    private long totalSizeBytes = 0;//DownloadManager下载文件的总大小
     private long lastModifiedTimestamp = 0;//最后修改的时间
     private Uri uri;//下载的地址
     private Uri localUri;//本地文件的路径
@@ -67,7 +69,7 @@ public class DownloadInfo {
      *
      * @param downloadSizeBytes the download size bytes
      */
-    void setDownloadSizeBytes(int downloadSizeBytes) {
+    void setDownloadSizeBytes(long downloadSizeBytes) {
         this.downloadSizeBytes = downloadSizeBytes;
     }
 
@@ -76,7 +78,7 @@ public class DownloadInfo {
      *
      * @param totalSizeBytes the total size bytes
      */
-    void setTotalSizeBytes(int totalSizeBytes) {
+    void setTotalSizeBytes(long totalSizeBytes) {
         this.totalSizeBytes = totalSizeBytes;
     }
 
@@ -179,7 +181,7 @@ public class DownloadInfo {
      *
      * @return the download size bytes
      */
-    public int getDownloadSizeBytes() {
+    public long getDownloadSizeBytes() {
         return downloadSizeBytes;
     }
 
@@ -188,7 +190,7 @@ public class DownloadInfo {
      *
      * @return the total size bytes
      */
-    public int getTotalSizeBytes() {
+    public long getTotalSizeBytes() {
         return totalSizeBytes;
     }
 
@@ -199,9 +201,14 @@ public class DownloadInfo {
      */
     public double getProgress() {
         double percent = downloadSizeBytes / (totalSizeBytes * 1.0);
-        return new BigDecimal(percent * 100)
-                .setScale(2, BigDecimal.ROUND_UNNECESSARY)
-                .doubleValue();
+        try {
+            return new BigDecimal(percent * 100)
+                    .setScale(2, BigDecimal.ROUND_HALF_EVEN)
+                    .doubleValue();
+        } catch (Exception e) {
+            Log.e(TAG, " " + e.toString());
+        }
+        return 0;
     }
 
     /**
@@ -233,12 +240,30 @@ public class DownloadInfo {
     }
 
     /**
+     * Get download url string.
+     *
+     * @return the string
+     */
+    public String getDownloadUrl() {
+        return uri != null ? uri.toString() : "";
+    }
+
+    /**
      * Gets local uri.
      *
      * @return the local uri
      */
     public Uri getLocalUri() {
         return localUri;
+    }
+
+    /**
+     * Gets local path.
+     *
+     * @return the local path
+     */
+    public String getLocalPath() {
+        return localUri != null ? localUri.toString() : "";
     }
 
     /**
