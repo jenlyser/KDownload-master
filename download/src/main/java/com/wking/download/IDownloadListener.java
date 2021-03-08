@@ -7,7 +7,7 @@ package com.wking.download;
  * @Date 2021 /3/3
  * @Description IDownLoadListener.java
  */
-public interface IDownLoadListener {
+public interface IDownloadListener {
 
     /**
      * On pause.

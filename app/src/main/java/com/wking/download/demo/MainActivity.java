@@ -12,12 +12,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.wking.download.DownLoadTask;
 import com.wking.download.DownloadInfo;
 import com.wking.download.DownloadManagerPro;
-import com.wking.download.IDownLoadListener;
+import com.wking.download.IDownloadListener;
 
 import java.io.File;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -77,7 +74,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.btn_progress_download:
                 if (mDownTask != null) {
-                    mDownTask.registerListener(new IDownLoadListener() {
+                    mDownTask.registerListener(new IDownloadListener() {
                         @Override
                         public void onPause() {
                             Log.d(TAG, "onPause");

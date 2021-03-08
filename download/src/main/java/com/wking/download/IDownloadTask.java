@@ -1,19 +1,19 @@
 package com.wking.download;
 
-public interface IDownLoadTask {
+public interface IDownloadTask {
     /**
      * 添加下载监听
      *
      * @param listener 监听接口
      */
-    void registerListener(IDownLoadListener listener);
+    void registerListener(IDownloadListener listener);
 
     /**
      * 取消下载监听
      *
      * @param listener
      */
-    void unregisterListener(IDownLoadListener listener);
+    void unregisterListener(IDownloadListener listener);
 
     /**
      * 获取下载数据

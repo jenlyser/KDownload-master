@@ -22,7 +22,7 @@ import java.util.List;
  * @Date 2021 /3/3
  * @Description DownLoadTask.java
  */
-public class DownLoadTask implements IDownLoadTask, IDownloadQuery {
+public class DownLoadTask implements IDownloadTask, IDownloadQuery {
     /**
      * The constant TAG.
      */
@@ -32,7 +32,7 @@ public class DownLoadTask implements IDownLoadTask, IDownloadQuery {
     private DownloadInfo mInfo;
     private DownloadControl mDownloadControl;
     private long mDownloadId;
-    private List<IDownLoadListener> mListener = new ArrayList<>();
+    private List<IDownloadListener> mListener = new ArrayList<>();
     private DownloadObserver mDownloadObserver;
     private IDownloadCancel mCancel;
     private final Uri downloadUri = Uri.parse("content://downloads/my_downloads");
@@ -161,7 +161,7 @@ public class DownLoadTask implements IDownLoadTask, IDownloadQuery {
      * @param listener 监听接口
      */
     @Override
-    public void registerListener(IDownLoadListener listener) {
+    public void registerListener(IDownloadListener listener) {
         Log.d(TAG,"registerListener");
         synchronized (mListener) {
             if (listener != null && !mListener.contains(listener))
@@ -187,7 +187,7 @@ public class DownLoadTask implements IDownLoadTask, IDownloadQuery {
      * @param listener
      */
     @Override
-    public void unregisterListener(IDownLoadListener listener) {
+    public void unregisterListener(IDownloadListener listener) {
         Log.d(TAG,"unregisterListener");
         synchronized (mListener) {
             if (listener != null && mListener.contains(listener))
