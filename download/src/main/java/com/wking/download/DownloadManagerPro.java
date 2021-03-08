@@ -3,11 +3,14 @@ package com.wking.download;
 import android.app.Application;
 import android.app.DownloadManager;
 import android.content.Context;
+import android.net.Uri;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.wking.download.manager.TaskHolder;
 import com.wking.download.manager.TaskModel;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -15,12 +18,14 @@ import java.util.List;
 /**
  * DownloadManager 的增强版本,扩展了DownloadManager的功能,便于方便使用和管理.
  * 主要增加了暂停,恢复下载,进度监听,任务恢复等.
+ *
  * @Author Sean
  * @Date 2021/3/5
  * @Description DownloadManagerPro.java
  */
 public class DownloadManagerPro {
 
+    private static String TAG = "DownloadManagerPro";
     //全局上下文
     private static Context mContext;
     //DownloadManager对象
@@ -75,12 +80,60 @@ public class DownloadManagerPro {
     }
 
     /**
-     * 添加下载任务
+     * 创建 DownloadManager.Request
+     *
+     * @param downLoadUrl 要下载的文件的url
+     * @param file        存储的路径和文件名
+     * @return
+     */
+    public static DownloadManager.Request buildRequest(String downLoadUrl, String file) {
+        if (TextUtils.isEmpty(downLoadUrl) || TextUtils.isEmpty(file)) {
+            return null;
+        }
+        File destFile = new File(file);
+        if (destFile != null && !destFile.getParentFile().exists()) {
+            destFile.getParentFile().mkdirs();
+        }
+        Uri uri = Uri.parse(downLoadUrl);
+        Log.d(TAG, "DownLoad URL:" + downLoadUrl);
+        //创建下载任务
+        DownloadManager.Request request = new DownloadManager.Request(uri);
+        request.addRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        request.setMimeType("application/x-www-form-urlencoded");
+        //设置下载的路径
+        request.setDestinationUri(Uri.fromFile(destFile));
+        //移动网络情况下是否允许漫游
+        request.setAllowedOverRoaming(true);
+        //在通知栏中显示，默认就是显示的
+//        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
+//        request.setTitle("下载文件");
+//        request.setDescription("下载描述");
+//        request.setVisibleInDownloadsUi(true);
+        return request;
+    }
+
+    /**
+     * 开始下载文件
+     * @param downLoadUrl
+     * @param file
+     * @return
+     */
+    public static DownLoadTask startDownload(String downLoadUrl, String file) {
+        DownLoadTask downLoadTask = getTask(downLoadUrl);
+        if (downLoadTask != null) {
+            return downLoadTask;
+        }
+        DownloadManager.Request request = buildRequest(downLoadUrl, file);
+        return startDownload(request);
+    }
+
+    /**
+     * 创建任务并且开始下载
      *
      * @param request the request
      * @return the down load task
      */
-    public static DownLoadTask addTask(DownloadManager.Request request) {
+    public static DownLoadTask startDownload(DownloadManager.Request request) {
         if (request != null) {
             long downLoadId = getManager().enqueue(request);
             DownLoadTask task = new DownLoadTask(getContext(), getManager(), downLoadId);

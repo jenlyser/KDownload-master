@@ -60,21 +60,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         request.setTitle("下载文件");
         request.setDescription("下载描述");
         //        request.setVisibleInDownloadsUi(true);
-        //        request.vi
         //设置下载的路径
         File file = new File(this.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName);
         request.setDestinationUri(Uri.fromFile(file));
 
-        mDownTask = DownloadManagerPro.addTask(request);
+        mDownTask = DownloadManagerPro.startDownload(request);
     }
 
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btn_start_download:
-                downloadTest(downloadUrl, "111.iso");
-//                downloadUrl = "https://ip4062117236.mobgslb.tbcache.com/fs01/union_pack/Wandoujia_3266791_web_seo_baidu_homepage.apk?ali_redirect_domain=alissl.ucdl.pp.uc.cn&ali_redirect_ex_ftag=0f09e940439d5c73db899050d0dd1b82f143305010517c12&ali_redirect_ex_tmining_ts=1614915009&ali_redirect_ex_tmining_expire=3600&ali_redirect_ex_hot=100";
-//                downloadTest(downloadUrl, "test.apk");
+//                downloadTest(downloadUrl, "111.iso");
+                downloadUrl = "https://ip4062117236.mobgslb.tbcache.com/fs01/union_pack/Wandoujia_3266791_web_seo_baidu_homepage.apk?ali_redirect_domain=alissl.ucdl.pp.uc.cn&ali_redirect_ex_ftag=0f09e940439d5c73db899050d0dd1b82f143305010517c12&ali_redirect_ex_tmining_ts=1614915009&ali_redirect_ex_tmining_expire=3600&ali_redirect_ex_hot=100";
+                downloadTest(downloadUrl, "test.apk");
                 break;
             case R.id.btn_progress_download:
                 if (mDownTask != null) {

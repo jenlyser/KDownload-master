@@ -26,6 +26,23 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    task makeJar(type: Copy) {
+        //删除存在的
+        delete 'build/libs/kdownload.jar'
+        //设置拷贝的文件
+        //from('build/intermediates/bundles/debug/')
+        //from('build/intermediates/packaged-classes/release/') //jar文件来源
+        from('build/intermediates/aar_main_jar/release/') //jar文件来源
+        //打进jar包后的文件目录
+        into('build/libs/')
+        //将classes.jar放入build/libs/目录下
+        //include ,exclude参数来设置过滤
+        include('classes.jar')
+        //重命名
+        rename('classes.jar', 'kdownload.jar')
+    }
+    makeJar.dependsOn(build)
 }
 
 dependencies {

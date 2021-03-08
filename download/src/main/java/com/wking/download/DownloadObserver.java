@@ -15,6 +15,8 @@ class DownloadObserver extends ContentObserver {
     private String TAG = "DownloadObserver";
     private IDownloadQuery mQuery;//数据更新回调接口.
     private Handler mHandler;
+    private long currentTime;
+    private long lastQueryTime;
 
     public DownloadObserver(Handler handler, IDownloadQuery query) {
         super(handler);
@@ -24,6 +26,7 @@ class DownloadObserver extends ContentObserver {
 
     /**
      * 继承接口
+     * 为了避免调用接口太过频繁,
      *
      * @param selfChange
      */
@@ -32,6 +35,13 @@ class DownloadObserver extends ContentObserver {
         super.onChange(selfChange);
         Log.d(TAG, "ContentObserver->onChange();");
         mHandler.postDelayed(() -> {
+            currentTime = System.currentTimeMillis();
+            //避免刷新太频繁.
+            if (currentTime - lastQueryTime < 1000) {
+                Log.d(TAG, "ContentObserver->return;");
+                return;
+            }
+            lastQueryTime = System.currentTimeMillis();
             notifyChanged();
         }, 1000);
     }
