@@ -31,7 +31,7 @@ public class DownloadManagerPro {
     //DownloadManager对象
     private static DownloadManager mManager;
     //DownloadManager任务列表
-    private static List<DownLoadTask> mDownloadList = new ArrayList<>();
+    private static List<DownloadTask> mDownloadList = new ArrayList<>();
     //取消任务监听接口.
     private static IDownloadCancel mDownloadCancel;
 
@@ -118,8 +118,8 @@ public class DownloadManagerPro {
      * @param file
      * @return
      */
-    public static DownLoadTask startDownload(String downLoadUrl, String file) {
-        DownLoadTask downLoadTask = getTask(downLoadUrl);
+    public static DownloadTask startDownload(String downLoadUrl, String file) {
+        DownloadTask downLoadTask = getTask(downLoadUrl);
         if (downLoadTask != null) {
             return downLoadTask;
         }
@@ -133,10 +133,10 @@ public class DownloadManagerPro {
      * @param request the request
      * @return the down load task
      */
-    public static DownLoadTask startDownload(DownloadManager.Request request) {
+    public static DownloadTask startDownload(DownloadManager.Request request) {
         if (request != null) {
             long downLoadId = getManager().enqueue(request);
-            DownLoadTask task = new DownLoadTask(getContext(), getManager(), downLoadId);
+            DownloadTask task = new DownloadTask(getContext(), getManager(), downLoadId);
             addTaskToList(task);
             saveTask(task.getDownLoadInfo());
             return task;
@@ -149,7 +149,7 @@ public class DownloadManagerPro {
      *
      * @return tasks tasks
      */
-    public static List<DownLoadTask> getTasks() {
+    public static List<DownloadTask> getTasks() {
         if (mDownloadList == null) {
             mDownloadList = new ArrayList<>();
         }
@@ -157,7 +157,7 @@ public class DownloadManagerPro {
             synchronized (mDownloadList) {
                 List<TaskModel> taskModels = TaskHolder.getInstance().getDataList();
                 for (int i = 0; i < taskModels.size(); i++) {
-                    addTaskToList(new DownLoadTask(getContext(), getManager(), taskModels.get(i).getId()));
+                    addTaskToList(new DownloadTask(getContext(), getManager(), taskModels.get(i).getId()));
                 }
             }
         }
@@ -169,14 +169,14 @@ public class DownloadManagerPro {
      *
      * @param task
      */
-    private static void addTaskToList(DownLoadTask task) {
+    private static void addTaskToList(DownloadTask task) {
         if (mDownloadCancel == null) {
             mDownloadCancel = new IDownloadCancel() {
                 @Override
                 public void onCancel(long id) {
                     //从下载记录中移除.
                     TaskHolder.getInstance().remove(id);
-                    DownLoadTask downLoadTask = getTaskByDownloadId(id, null);
+                    DownloadTask downLoadTask = getTaskByDownloadId(id, null);
                     if (downLoadTask != null && mDownloadList.contains(downLoadTask)) {
                         synchronized (mDownloadList) {
                             mDownloadList.remove(downLoadTask);
@@ -215,9 +215,9 @@ public class DownloadManagerPro {
      * @param downloadId
      * @return
      */
-    private static DownLoadTask getTaskByDownloadId(long downloadId, String downloadUrl) {
+    private static DownloadTask getTaskByDownloadId(long downloadId, String downloadUrl) {
         synchronized (mDownloadList) {
-            DownLoadTask task;
+            DownloadTask task;
             for (int i = 0; i < getTasks().size(); i++) {
                 task = getTasks().get(i);
                 if (task.getDownLoadInfo().getId() == downloadId) {
@@ -236,15 +236,15 @@ public class DownloadManagerPro {
      * @param downloadId the download id
      * @return the task
      */
-    public static DownLoadTask getTask(long downloadId) {
+    public static DownloadTask getTask(long downloadId) {
         if (downloadId >= 0) {
-            DownLoadTask task = getTaskByDownloadId(downloadId, null);
+            DownloadTask task = getTaskByDownloadId(downloadId, null);
             if (task != null) return task;
             TaskModel model = TaskHolder.getInstance().getModel(downloadId);
             if (model != null) {
-                task = new DownLoadTask(getContext(), getManager(), model.getId());
+                task = new DownloadTask(getContext(), getManager(), model.getId());
             } else {
-                task = new DownLoadTask(getContext(), getManager(), downloadId);
+                task = new DownloadTask(getContext(), getManager(), downloadId);
             }
             addTaskToList(task);
             return task;
@@ -260,13 +260,13 @@ public class DownloadManagerPro {
      * @param downloadUrl the download url
      * @return the task
      */
-    public static DownLoadTask getTask(String downloadUrl) {
+    public static DownloadTask getTask(String downloadUrl) {
         if (!TextUtils.isEmpty(downloadUrl)) {
-            DownLoadTask task = getTaskByDownloadId(Integer.MIN_VALUE, downloadUrl);
+            DownloadTask task = getTaskByDownloadId(Integer.MIN_VALUE, downloadUrl);
             if (task != null) return task;
             TaskModel model = TaskHolder.getInstance().getModel(downloadUrl);
             if (model != null) {
-                task = new DownLoadTask(getContext(), getManager(), model.getId());
+                task = new DownloadTask(getContext(), getManager(), model.getId());
                 addTaskToList(task);
                 return task;
             }

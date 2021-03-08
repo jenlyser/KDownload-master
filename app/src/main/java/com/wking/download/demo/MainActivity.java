@@ -9,7 +9,7 @@ import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.wking.download.DownLoadTask;
+import com.wking.download.DownloadTask;
 import com.wking.download.DownloadInfo;
 import com.wking.download.DownloadManagerPro;
 import com.wking.download.IDownloadListener;
@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     private String downloadUrl = "https://dw.fjweite.cn/syt/windows_10_professional_x64_2020.iso";
-    private DownLoadTask mDownTask;
+    private DownloadTask mDownTask;
     private boolean executeStatus;
 
     private void downloadTest(String dUrl, String fileName) {

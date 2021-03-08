@@ -22,7 +22,7 @@ import java.util.List;
  * @Date 2021 /3/3
  * @Description DownLoadTask.java
  */
-public class DownLoadTask implements IDownloadTask, IDownloadQuery {
+public class DownloadTask implements IDownloadTask, IDownloadQuery {
     /**
      * The constant TAG.
      */
@@ -44,7 +44,7 @@ public class DownLoadTask implements IDownloadTask, IDownloadQuery {
      * @param manager    the manager
      * @param downloadId the download id
      */
-    public DownLoadTask(Context context, DownloadManager manager, long downloadId) {
+    public DownloadTask(Context context, DownloadManager manager, long downloadId) {
         this.mManager = manager;
         this.mContext = context;
         this.mDownloadId = downloadId;

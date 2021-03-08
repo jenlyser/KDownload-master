@@ -3,11 +3,11 @@ package com.wking.download;
 
 import android.util.Log;
 
-public abstract class DownLoadProgressListener implements IDownloadListener {
+public abstract class DownloadProgressListener implements IDownloadListener {
 
     private String TAG = "DownLoadProgressListener";
 
-    public DownLoadProgressListener() {
+    public DownloadProgressListener() {
     }
 
     @Override
