@@ -114,7 +114,8 @@ public class DownloadTask implements IDownloadTask, IDownloadQuery {
                     mInfo.setMediaType(cur.getString(
                             cur.getColumnIndex(DownloadManager.COLUMN_MEDIA_TYPE)));
                 }
-
+            }else {
+                mInfo.setNotExists();
             }
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());

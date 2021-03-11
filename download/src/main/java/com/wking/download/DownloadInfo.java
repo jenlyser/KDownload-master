@@ -367,4 +367,10 @@ public class DownloadInfo {
         return Integer.MIN_VALUE != status;
     }
 
+    /**
+     * Sets not exists.
+     */
+    void setNotExists() {
+        status = Integer.MIN_VALUE;
+    }
 }
